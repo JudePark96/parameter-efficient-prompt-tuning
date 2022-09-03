@@ -2,6 +2,7 @@
 .idea
 
 # Sources
+.DS_Store
 rsc
 
 # Byte-compiled / optimized / DLL files

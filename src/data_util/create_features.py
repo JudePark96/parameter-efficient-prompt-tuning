@@ -9,7 +9,9 @@ from functools import partial
 from random import Random
 from typing import Union, Optional, List, Callable
 
+import torch
 from datasets import load_dataset
+from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 from transformers import InputExample, AutoTokenizer, RobertaTokenizer
 
@@ -180,6 +182,20 @@ def convert_examples_to_mlm_pretraining_features(
     )
 
 
+def get_few_shot_prompt_dataloader(input_path: str, data_type: str, batch_size: int, num_workers: int) -> DataLoader:
+  with open(os.path.join(input_path, f'{data_type}.pkl'), 'rb') as f:
+    data = pickle.load(f)
+
+  input_ids = torch.tensor([d.input_ids for d in data]).long()
+  attention_mask = torch.tensor([d.attention_mask for d in data]).long()
+  labels = torch.tensor([int(d.label) for d in data]).long()
+
+  dataset = TensorDataset(input_ids, attention_mask, labels)
+  loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
+
+  return loader
+
+
 if __name__ == '__main__':
   opt = get_options()
   logger.info(vars(opt))
@@ -214,13 +230,13 @@ if __name__ == '__main__':
       pickle.dump(pretraining_data, f)
 
   elif opt.preprocessing_type == 'finetune':
-    os.makedirs(os.path.join(opt.output_path, opt.task.lower()), exist_ok=True)
+    os.makedirs(opt.output_path, exist_ok=True)
 
     task_data = [processors_mapping[opt.task.lower()].get_train_examples(opt.input_path),
                  processors_mapping[opt.task.lower()].get_dev_examples(opt.input_path),
                  processors_mapping[opt.task.lower()].get_test_examples(opt.input_path)]
 
-    tokenizer = AutoTokenizer.from_pretrained(opt.model_name_or_config_path)
+    tokenizer = RobertaTokenizer.from_pretrained(opt.model_name_or_config_path)
 
     for t, name in zip(task_data, ['train', 'dev', 'test']):
       if name == 'test':
