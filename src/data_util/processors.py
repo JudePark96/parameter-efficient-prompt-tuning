@@ -632,7 +632,10 @@ Verbalizer = {
 }
 
 Templatizer = {
-  "sst-2": "It was {} ."
+  "sst-2": "It was {} .",
+  "cr": "It was {} .",
+  "rte": "? {} ",
+  "mr": "It was {} ."
 }
 
 if __name__ == '__main__':

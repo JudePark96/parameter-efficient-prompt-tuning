@@ -55,6 +55,7 @@ def split_into_sentences(text: str) -> str:
   sentences = [s.strip() for s in sentences]
   return sentences
 
+
 def fetch_lines(item: Dict[str, str], stop_prefix_list: List[str]) -> List[str]:
   article = item['text']
   article_list = article.split('\n')

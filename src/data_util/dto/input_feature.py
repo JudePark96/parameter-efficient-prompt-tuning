@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class InputFeature(object):
   input_ids: List[int]
   attention_mask: List[int]
-  token_type_ids: Optional[List[int]]
+  token_type_ids: Optional[List[int]] = None
   label: Optional[Union[int, float]] = None
 
 
@@ -20,7 +20,7 @@ class InputFeature(object):
 class PreTrainingInputFeature(object):
   input_ids: List[int]
   attention_mask: List[int]
-  token_type_ids: Optional[List[int]]
+  token_type_ids: Optional[List[int]] = None
   label: Optional[Union[int, float]] = None
 
 
