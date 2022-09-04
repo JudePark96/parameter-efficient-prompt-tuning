@@ -30,6 +30,9 @@ class PromptTuningMixIn:
   ):
     model = super().from_pretrained(model_name_or_config_path, **kwargs)
 
+    for params in model.parameters():
+      params.required_grad = False
+
     if soft_prompt_path is not None:
       model.set_soft_prompt_embeds(soft_prompt_path)
     elif n_tokens is not None:
@@ -234,5 +237,5 @@ if __name__ == '__main__':
   loader = get_few_shot_prompt_dataloader('../../rsc/preprocessed/finetuning/SST-2/16-13', 'train', 4, 16)
   model = PromptingLM('roberta-base', 20, 'sst-2', RobertaTokenizer.from_pretrained('roberta-base'), True)
   for batch in loader:
-    model(batch[0], batch[1], batch[2])
+    print(model(batch[0], batch[1], batch[2]))
     exit()

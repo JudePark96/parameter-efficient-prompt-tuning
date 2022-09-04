@@ -196,6 +196,20 @@ def get_few_shot_prompt_dataloader(input_path: str, data_type: str, batch_size: 
   return loader
 
 
+def get_pretraining_dataloader(input_path: str, file_name: str, batch_size: int, num_workers: int) -> DataLoader:
+  with open(os.path.join(input_path, f'{file_name}.pkl'), 'rb') as f:
+    data = pickle.load(f)
+
+  input_ids = torch.tensor([d.input_ids for d in data]).long()
+  attention_mask = torch.tensor([d.attention_mask for d in data]).long()
+  labels = torch.tensor([d.label for d in data]).long()
+
+  dataset = TensorDataset(input_ids, attention_mask, labels)
+  loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
+
+  return loader
+
+
 if __name__ == '__main__':
   opt = get_options()
   logger.info(vars(opt))
@@ -204,27 +218,27 @@ if __name__ == '__main__':
     with open(opt.input_path, 'r', encoding='utf-8') as f:
       raw_pretraining_data = [line.strip() for line in tqdm(f, desc='reading pretraining data ...')]
 
-    tokenizer = AutoTokenizer.from_pretrained(opt.model_name_or_config_path)
+    tokenizer = RobertaTokenizer.from_pretrained(opt.model_name_or_config_path)
     vocab_words = list(tokenizer.get_vocab().keys())
     masking_func = masking_funcs['mlm']
     n_threads = multiprocessing.cpu_count()
 
-    raw_pretraining_data = raw_pretraining_data[:10000000]
+    raw_pretraining_data = raw_pretraining_data[:1000]
 
-    with multiprocessing.Pool(n_threads) as p:
-      preprocessing_func = partial(convert_examples_to_mlm_pretraining_features, max_length=opt.max_length,
-                                   masking_func=masking_func, vocab_words=vocab_words,
-                                   rng=random.Random(opt.seed), tokenizer=tokenizer, model_type='roberta',
-                                   masked_lm_prob=opt.masked_lm_prob,
-                                   max_predictions_per_seq=opt.max_predictions_per_seq,
-                                   do_whole_word_mask=opt.do_whole_word_mask)
-      pretraining_data = list(tqdm(p.map(preprocessing_func, raw_pretraining_data, chunksize=16),
-                                   total=len(raw_pretraining_data), desc='preprocessing pretraining data ...'))
+    # with multiprocessing.Pool(n_threads) as p:
+    preprocessing_func = partial(convert_examples_to_mlm_pretraining_features, max_length=opt.max_length,
+                                 masking_func=masking_func, vocab_words=vocab_words,
+                                 rng=random.Random(opt.seed), tokenizer=tokenizer, model_type='roberta',
+                                 masked_lm_prob=opt.masked_lm_prob,
+                                 max_predictions_per_seq=opt.max_predictions_per_seq,
+                                 do_whole_word_mask=opt.do_whole_word_mask)
+    #   pretraining_data = list(tqdm(p.map(preprocessing_func, raw_pretraining_data, chunksize=16),
+    #                                total=len(raw_pretraining_data), desc='preprocessing pretraining data ...'))
 
-    # pretraining_data = [preprocessing_func(raw) for raw in
-    #                     tqdm(raw_pretraining_data, desc='preprocessing pretraining data ...')]
+    pretraining_data = [preprocessing_func(raw) for raw in
+                        tqdm(raw_pretraining_data, desc='preprocessing pretraining data ...')]
 
-    with open(os.path.join(opt.output_path, f'roberta_maxlen${opt.max_length}_prob{opt.masked_lm_prob}'
+    with open(os.path.join(opt.output_path, f'test_roberta_maxlen${opt.max_length}_prob{opt.masked_lm_prob}'
                                             f'_max_pred_per_seq${opt.max_predictions_per_seq}_'
                                             f'do_whole_word_mask${opt.do_whole_word_mask}.pkl'), 'wb') as f:
       pickle.dump(pretraining_data, f)
