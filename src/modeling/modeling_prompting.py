@@ -30,8 +30,12 @@ class PromptTuningMixIn:
   ):
     model = super().from_pretrained(model_name_or_config_path, **kwargs)
 
-    for params in model.parameters():
-      params.required_grad = False
+    for name, params in model.named_parameters():
+      if 'lm_head' in name and 'bias' not in name:
+        # We activate parameters of lm head except bias parameters.
+        params.required_grad = True
+      else:
+        params.required_grad = False
 
     if soft_prompt_path is not None:
       model.set_soft_prompt_embeds(soft_prompt_path)
@@ -167,14 +171,13 @@ class NormalPromptingLM(nn.Module):
     self.lm = RobertaForMaskedLM.from_pretrained(self.model_name_or_config_path)
     self.verbalizer = [tokenizer.convert_tokens_to_ids(tokenizer.tokenize(word)) for word in Verbalizer[task]]
     self.mask_token_id = tokenizer.mask_token_id
-    self.tokenizer = tokenizer
     self.loss_fn = nn.CrossEntropyLoss()
 
   def forward(
     self,
     input_ids: torch.Tensor,
     attention_mask: Optional[torch.Tensor],
-    label: Optional[torch.Tensor]
+    label: Optional[torch.Tensor] = None
   ) -> Dict[str, torch.Tensor]:
     masked_positions = (input_ids == self.mask_token_id).nonzero()
     lm_output = self.lm(input_ids, attention_mask)
@@ -183,7 +186,9 @@ class NormalPromptingLM(nn.Module):
                                for idx, position in enumerate(masked_positions[:, 1])], dim=0)
     verbalizer = torch.tensor(self.verbalizer).long().to(masked_logits.device).squeeze(dim=-1)
     verbalized_logits = masked_logits[:, verbalizer]
-    loss = self.loss_fn(verbalized_logits, label)
+    loss = None
+    if label is not None:
+      loss = self.loss_fn(verbalized_logits, label)
 
     return {
       'logits': verbalized_logits,
@@ -213,7 +218,7 @@ class PromptingLM(nn.Module):
     self,
     input_ids: torch.Tensor,
     attention_mask: Optional[torch.Tensor],
-    label: Optional[torch.Tensor]
+    labels: Optional[torch.Tensor] = None
   ) -> Dict[str, torch.Tensor]:
     masked_positions = (input_ids == self.mask_token_id).nonzero()
     lm_output = self.lm(input_ids, attention_mask)
@@ -225,7 +230,9 @@ class PromptingLM(nn.Module):
     verbalizer = torch.tensor(self.verbalizer).long().to(masked_logits.device).squeeze(dim=-1)
     verbalized_logits = masked_logits[:, verbalizer]
 
-    loss = self.loss_fn(verbalized_logits, label)
+    loss = None
+    if labels is not None:
+      loss = self.loss_fn(verbalized_logits, labels)
 
     return {
       'logits': verbalized_logits,

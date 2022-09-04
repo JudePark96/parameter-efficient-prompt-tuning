@@ -7,6 +7,7 @@ from transformers.modeling_outputs import MaskedLMOutput
 from transformers.models.roberta.modeling_roberta import RobertaLMHead
 
 from src.data_util.create_features import get_few_shot_prompt_dataloader, get_pretraining_dataloader
+from src.data_util.processors import Verbalizer
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -153,12 +154,15 @@ class PrefixRobertaModelForMaskedLM(RobertaPreTrainedModel, ABC):
         attentions=outputs.attentions
       )
     elif self.training_type == 'finetuning':
+      loss_fct = nn.CrossEntropyLoss()
       masked_positions = (input_ids == self.mask_token_id).nonzero()
       masked_logits = torch.cat([prediction_scores[idx, position, :].unsqueeze(dim=0)
                                  for idx, position in enumerate(masked_positions[:, 1])], dim=0)
       verbalizer = torch.tensor(self.verbalizer).long().to(masked_logits.device).squeeze(dim=-1)
       verbalized_logits = masked_logits[:, verbalizer]
-      loss = self.loss_fn(verbalized_logits, labels)
+      loss = None
+      if labels is not None:
+        loss = loss_fct(verbalized_logits, labels)
       return {
         'logits': verbalized_logits,
         'loss': loss

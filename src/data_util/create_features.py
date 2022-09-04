@@ -7,11 +7,11 @@ import random
 import sys
 from functools import partial
 from random import Random
-from typing import Union, Optional, List, Callable
+from typing import Union, Optional, List, Callable, Tuple
 
 import torch
 from datasets import load_dataset
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, RandomSampler, DistributedSampler, Dataset
 from tqdm import tqdm
 from transformers import InputExample, AutoTokenizer, RobertaTokenizer
 
@@ -196,7 +196,8 @@ def get_few_shot_prompt_dataloader(input_path: str, data_type: str, batch_size: 
   return loader
 
 
-def get_pretraining_dataloader(input_path: str, file_name: str, batch_size: int, num_workers: int) -> DataLoader:
+def get_pretraining_dataloader(input_path: str, file_name: str, batch_size: int, num_workers: int,
+                               multi_gpu: bool) -> Tuple[DataLoader, Dataset]:
   with open(os.path.join(input_path, f'{file_name}.pkl'), 'rb') as f:
     data = pickle.load(f)
 
@@ -205,9 +206,9 @@ def get_pretraining_dataloader(input_path: str, file_name: str, batch_size: int,
   labels = torch.tensor([d.label for d in data]).long()
 
   dataset = TensorDataset(input_ids, attention_mask, labels)
-  loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
-
-  return loader
+  sampler = RandomSampler(dataset) if not multi_gpu else DistributedSampler(dataset)
+  loader = DataLoader(dataset, sampler=sampler, batch_size=batch_size, num_workers=num_workers, pin_memory=True)
+  return loader, dataset
 
 
 if __name__ == '__main__':
