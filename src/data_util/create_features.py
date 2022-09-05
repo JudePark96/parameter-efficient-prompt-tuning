@@ -188,7 +188,20 @@ def get_few_shot_prompt_dataloader(input_path: str, data_type: str, batch_size: 
 
   input_ids = torch.tensor([d.input_ids for d in data]).long()
   attention_mask = torch.tensor([d.attention_mask for d in data]).long()
-  labels = torch.tensor([int(d.label) for d in data]).long()
+
+  if 'rte' in input_path.lower():
+    labels = []
+
+    for d in data:
+      if d.label == 'not_entailment':
+        labels.append(0)
+      elif d.label == 'entailment':
+        labels.append(1)
+      else:
+        raise NotImplementedError()
+    labels = torch.tensor(labels).long()
+  else:
+    labels = torch.tensor([int(d.label) for d in data]).long()
 
   dataset = TensorDataset(input_ids, attention_mask, labels)
   loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
@@ -224,7 +237,7 @@ if __name__ == '__main__':
     masking_func = masking_funcs['mlm']
     n_threads = multiprocessing.cpu_count()
 
-    raw_pretraining_data = raw_pretraining_data[:1000]
+    raw_pretraining_data = raw_pretraining_data[:2500000]
 
     # with multiprocessing.Pool(n_threads) as p:
     preprocessing_func = partial(convert_examples_to_mlm_pretraining_features, max_length=opt.max_length,
@@ -239,7 +252,7 @@ if __name__ == '__main__':
     pretraining_data = [preprocessing_func(raw) for raw in
                         tqdm(raw_pretraining_data, desc='preprocessing pretraining data ...')]
 
-    with open(os.path.join(opt.output_path, f'test_roberta_maxlen${opt.max_length}_prob{opt.masked_lm_prob}'
+    with open(os.path.join(opt.output_path, f'2.5m_roberta_maxlen${opt.max_length}_prob{opt.masked_lm_prob}'
                                             f'_max_pred_per_seq${opt.max_predictions_per_seq}_'
                                             f'do_whole_word_mask${opt.do_whole_word_mask}.pkl'), 'wb') as f:
       pickle.dump(pretraining_data, f)

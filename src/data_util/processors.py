@@ -625,7 +625,7 @@ Verbalizer = {
   "cr": [' terrible', ' great'],
   "qnli": ['No', 'Yes'],
   "qqp": ['No', 'Yes'],
-  "rte": ['Yes', 'No'],
+  "rte": ['No', 'Yes'],
   "snli": ['No', 'Yes', 'Maybe'],
   "sst-2": [' terrible', ' great'],
   "subj": [' subjective', ' objective'],
