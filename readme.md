@@ -2,7 +2,7 @@
 
 ### 1. Requirements
 
-```bash
+```shell
 torch==1.10.1
 transformers=4.21.2
 sentencepiece==0.1.97
@@ -16,7 +16,7 @@ datasets==2.4.0
 
 First, download the raw dataset for building the **k-shot** few-shot dataset.
 
-```bash
+```shell
 bash script/download_dataset.sh
 python3 data_util/generate_k_shot_data.py --k k \
                                           --data_dir data_dir \
@@ -25,13 +25,13 @@ python3 data_util/generate_k_shot_data.py --k k \
 
 Now you can build the features of few-shot dataset for each tasks.
 
-```
+```shell
 bash script/preprocessing/preprocessing_finetuning_data.sh
 ```
 
 ### 3. Training
 
-```bash
+```shell
 bash script/few_shot.prompting.training.sh
 bash script/conventional_tuning.full_params.training.sh
 bash script/conventional_tuning.freeze.training.sh
@@ -39,7 +39,7 @@ bash script/conventional_tuning.freeze.training.sh
 
 ### 4. Aggregate Results
 
-```bash
+```shell
 bash script/aggregate_results.sh
 ```
 
