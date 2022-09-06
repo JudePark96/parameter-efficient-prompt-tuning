@@ -55,7 +55,7 @@ def _get_parser():
   parser.add_argument('--per_gpu_train_batch_size', type=int, default=2)
   parser.add_argument("--eval_batch_size", type=int, default=8)
   parser.add_argument("--dev_eval_step", type=int, default=2500)
-  parser.add_argument("--gradient_accumulation_steps", type=int, default=4)
+  parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
   parser.add_argument("--learning_rate", type=float, default=5e-5)
   parser.add_argument("--optimizer", type=str, default='adafactor')
   parser.add_argument("--warmup_proportion", type=float, default=0.06)
@@ -186,10 +186,6 @@ def main():
 
         if global_steps % args.log_step_count_steps == 0 and args.is_master:
           write_log(args.save_checkpoints_dir, "log_step.txt", iter_bar)
-
-        if global_steps % args.dev_eval_step == 0 and args.is_master:
-          save_model_state_dict(args.save_checkpoints_dir,
-                                f"{epoch}epoch_step{(step + 1) * args.gradient_accumulation_steps}.pth", model)
 
       iter_loss += loss.item()
       iter_bar.set_postfix({

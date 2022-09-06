@@ -53,6 +53,7 @@ def _get_parser():
                       help='number of hidden size of prefix encoder')
   parser.add_argument('--prefix_projection', default=False, action='store_true',
                       help='whether projecting the prefix by additional MLP layer.')
+  parser.add_argument("--pretrained_prefix_path", type=str, default='../resources/')
   parser.add_argument('--initialize_from_vocab', default=False, action='store_true',
                       help='whether initializing embedding from pre-trained word embedding.')
   parser.add_argument('--freeze_lm', default=False, action='store_true',
@@ -112,7 +113,7 @@ def main():
                                                           prefix_hidden_size=args.prefix_hidden_size,
                                                           prefix_projection=args.prefix_projection,
                                                           training_type='finetuning')
-    pass
+    model.load_state_dict(torch.load(args.pretrained_prefix_path, map_location='cpu'))
   else:
     raise NotImplementedError(f'Not implemented type: {args.model_type}')
 
@@ -219,7 +220,7 @@ def main():
       logger.info(f'Current Early Stopping States: {early_stopping}')
 
       if early_stopping >= args.early_stopping:
-        logger.info(f'Early stopping strats!')
+        logger.info(f'Early stopping starts!')
         break
 
   write_score_log(args.save_checkpoints_dir, "dev_best.txt", dev_best)
