@@ -237,7 +237,7 @@ if __name__ == '__main__':
     masking_func = masking_funcs['mlm']
     n_threads = multiprocessing.cpu_count()
 
-    raw_pretraining_data = raw_pretraining_data[:2500000]
+    raw_pretraining_data = raw_pretraining_data[:1500000]
 
     # with multiprocessing.Pool(n_threads) as p:
     preprocessing_func = partial(convert_examples_to_mlm_pretraining_features, max_length=opt.max_length,
@@ -252,9 +252,9 @@ if __name__ == '__main__':
     pretraining_data = [preprocessing_func(raw) for raw in
                         tqdm(raw_pretraining_data, desc='preprocessing pretraining data ...')]
 
-    with open(os.path.join(opt.output_path, f'2.5m_roberta_maxlen${opt.max_length}_prob{opt.masked_lm_prob}'
-                                            f'_max_pred_per_seq${opt.max_predictions_per_seq}_'
-                                            f'do_whole_word_mask${opt.do_whole_word_mask}.pkl'), 'wb') as f:
+    with open(os.path.join(opt.output_path, f'1.5m_{opt.model_name_or_config_path}_maxlen{opt.max_length}_prob{opt.masked_lm_prob}'
+                                            f'_max_pred_per_seq{opt.max_predictions_per_seq}'
+                                            f'_do_whole_word_mask{opt.do_whole_word_mask}.pkl'), 'wb') as f:
       pickle.dump(pretraining_data, f)
 
   elif opt.preprocessing_type == 'finetune':

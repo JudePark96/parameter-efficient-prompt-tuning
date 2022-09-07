@@ -26,7 +26,7 @@ export MASTER_ADDR="localhost"
 DEVICE_IDS=0,1,2,3
 
 NUM_TRAIN_EPOCHS=5
-PER_GPU_TRAIN_BATCH_SIZE=4
+PER_GPU_TRAIN_BATCH_SIZE=16
 GRADIENT_ACCUMULATION_STEPS=1
 
 PEAK_LR=3e-05
@@ -43,32 +43,32 @@ OPTIMIZER='adafactor'
 # HuggingFace Config Setting
 MODEL_NAME_OR_CONFIG_PATH='roberta-base'
 INPUT_PATH='../rsc/preprocessed/pretraining/'
-FILE_NAME='roberta_maxlen384_prob0.15_max_pred_per_seq20_do_whole_word_maskTrue'
-PRE_SEQ_LEN=20
-PREFIX_HIDDEN_SIZE=256
+FILE_NAME='1.5m_roberta_maxlen384_prob0.15_max_pred_per_seq20_do_whole_word_maskTrue'
+#PRE_SEQ_LEN=10
+PREFIX_HIDDEN_SIZE=512
 
-
-SAVE_CHECKPOINTS_DIR=../checkpoints/PrefixPreTraining/ROBERTA_E${NUM_TRAIN_EPOCHS}_B${BATCH_SIZE}_WARM${WARMUP_PROPORTION}_NORM${MAX_GRAD_NORM}_LR${PEAK_LR}
-
-python3 -m torch.distributed.launch \
-          --nproc_per_node ${N_GPU_NODE} \
-          --nnodes ${N_NODES} \
-          --node_rank ${NODE_RANK} \
-          --master_addr ${MASTER_ADDR} \
-          --master_port ${MASTER_PORT} \
-          pretraining_trainer.py --n_gpu ${WORLD_SIZE} \
-                  --device_ids ${DEVICE_IDS} \
-                  --model_name_or_config_path ${MODEL_NAME_OR_CONFIG_PATH} \
-                  --save_checkpoints_dir "${SAVE_CHECKPOINTS_DIR}" \
-                  --num_train_epochs ${NUM_TRAIN_EPOCHS} \
-                  --input_path ${INPUT_PATH} \
-                  --file_name ${FILE_NAME} \
-                  --pre_seq_len ${PRE_SEQ_LEN} \
-                  --prefix_hidden_size ${PREFIX_HIDDEN_SIZE} \
-                  --dev_eval_step ${DEV_EVAL_STEP} \
-                  --per_gpu_train_batch_size ${PER_GPU_TRAIN_BATCH_SIZE} \
-                  --gradient_accumulation_steps ${GRADIENT_ACCUMULATION_STEPS} \
-                  --learning_rate ${PEAK_LR} \
-                  --optimizer ${OPTIMIZER} \
-                  --max_grad_norm ${MAX_GRAD_NORM} \
-                  --warmup_proportion ${WARMUP_PROPORTION}
+for PRE_SEQ_LEN in 10 15 20; do
+  SAVE_CHECKPOINTS_DIR=../checkpoints/PrefixPreTraining/ROBERTA-BASE_WWM_TRUE_PREFIX_HIDDEN${PREFIX_HIDDEN_SIZE}_PREFIX_LEN${PRE_SEQ_LEN}_E${NUM_TRAIN_EPOCHS}_B${BATCH_SIZE}_WARM${WARMUP_PROPORTION}_NORM${MAX_GRAD_NORM}_LR${PEAK_LR}
+  python3 -m torch.distributed.launch \
+            --nproc_per_node ${N_GPU_NODE} \
+            --nnodes ${N_NODES} \
+            --node_rank ${NODE_RANK} \
+            --master_addr ${MASTER_ADDR} \
+            --master_port ${MASTER_PORT} \
+            pretraining_trainer.py --n_gpu ${WORLD_SIZE} \
+                    --device_ids ${DEVICE_IDS} \
+                    --model_name_or_config_path ${MODEL_NAME_OR_CONFIG_PATH} \
+                    --save_checkpoints_dir "${SAVE_CHECKPOINTS_DIR}" \
+                    --num_train_epochs ${NUM_TRAIN_EPOCHS} \
+                    --input_path ${INPUT_PATH} \
+                    --file_name ${FILE_NAME} \
+                    --pre_seq_len ${PRE_SEQ_LEN} \
+                    --prefix_hidden_size ${PREFIX_HIDDEN_SIZE} \
+                    --dev_eval_step ${DEV_EVAL_STEP} \
+                    --per_gpu_train_batch_size ${PER_GPU_TRAIN_BATCH_SIZE} \
+                    --gradient_accumulation_steps ${GRADIENT_ACCUMULATION_STEPS} \
+                    --learning_rate ${PEAK_LR} \
+                    --optimizer ${OPTIMIZER} \
+                    --max_grad_norm ${MAX_GRAD_NORM} \
+                    --warmup_proportion ${WARMUP_PROPORTION}
+done

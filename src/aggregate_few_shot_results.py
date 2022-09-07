@@ -16,6 +16,10 @@ if __name__ == '__main__':
   k_shot = sys.argv[3]
   seeds = sys.argv[4].split(',')
 
+  if os.path.isdir(input_path) is False:
+    logger.info(f'There is no test results yet: {input_path}')
+    exit()
+
   dev_aggregated_results, test_aggregated_results = [], []
   dev_file_name, test_file_name = 'dev_best.txt', 'test_best.txt'
 

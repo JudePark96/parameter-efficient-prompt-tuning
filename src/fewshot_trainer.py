@@ -212,9 +212,7 @@ def main():
       if test_score > test_best:
         test_best = test_score
         logger.info(f'Congratulations! New Test Best Accuracy Score: {test_best}')
-        save_model_state_dict(args.save_checkpoints_dir,
-                              f"{epoch}epoch_step{global_steps}_acc{test_best}.pth",
-                              model)
+        save_model_state_dict(args.save_checkpoints_dir, f"test_acc{test_best}.pth", model)
     else:
       early_stopping += 1
       logger.info(f'Current Early Stopping States: {early_stopping}')
