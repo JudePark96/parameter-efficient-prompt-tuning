@@ -1,8 +1,7 @@
 #!/bin/bash
 
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=$1
 
-pre_seq_len=15
 pre_hidden_size=512
 
 for base in 'roberta-base' 'roberta-large'; do

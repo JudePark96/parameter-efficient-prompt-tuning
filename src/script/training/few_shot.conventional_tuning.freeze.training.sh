@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=$1
 
 for task in "SST-2" "cr" "RTE" "mr"; do
   for seed in "13" "21" "42" "87" "100"; do
